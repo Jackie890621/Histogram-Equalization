@@ -1,32 +1,40 @@
 from PIL import Image
 from collections import Counter
 import numpy as np
+import sys
 
-Input = Image.open('input.png')
-input_arr = np.array(Input)
+def histogram_equalization(q0, qk, target, w, h):
+    prob = (qk - q0) / (w * h)
 
-w, h = Input.size
-q0, qk = 0, 255
-prob = (qk - q0) / (w * h) 
+    temp = target.flatten()
+    H = Counter(temp)
+    maxi = max(H) + 1
 
-temp_arr = input_arr.flatten()
-H = Counter(temp_arr)
-maxi = max(H) + 1
+    p_sum = 0
+    for i in range(maxi):
+        p_sum += H[i]
+        H[i] = p_sum
 
-p_sum = 0
-for i in range(maxi):
-    p_sum += H[i]
-    H[i] = p_sum
+    for i in range(h):
+        for j in range(w):
+            if target[i][j] == 0 or target[i][j] == 255:
+                continue
 
-for i in range(h):
-    for j in range(w):
-        if input_arr[i][j] == 0 or input_arr[i][j] == 255:
-            continue
+            target[i][j] = prob * H[target[i][j]]
 
-        input_arr[i][j] = prob * H[input_arr[i][j]]
+    return np.uint8(target)
 
-output_arr = np.uint8(input_arr)
-output = Image.fromarray(output_arr)
-output.save('output.png')
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print('You should select input')
+        sys.exit()
+
+    Input = Image.open(sys.argv[1])
+    input_arr = np.array(Input)
+    w, h = Input.size
+
+    output_arr = histogram_equalization(0, 255, input_arr, w, h)
+    output = Image.fromarray(output_arr)
+    output.save('output.png')
 
     
